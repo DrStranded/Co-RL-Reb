@@ -137,6 +137,8 @@ for p in json.load(open(E["U_PLAN"])):
           + ("" if ok else f"  MISSING {missing[:5]} SIZE-MISMATCH {wrong[:5]} LACKING {lacking}"))
     if not ok: failed.append(rid)
 if failed: sys.exit(f"FATAL: verification failed for {failed}; rerun with UPLOAD_RESUME=1")
-print("[hf] all repos uploaded and verified")
+import datetime
+open(os.path.join(E["U_RET"], "UPLOADED.txt"), "w").write("".join(f"{p['repo']}  verified {datetime.datetime.utcnow():%Y-%m-%d %H:%M} UTC\n" for p in json.load(open(E["U_PLAN"]))))
+print("[hf] all repos uploaded and verified (UPLOADED.txt written)")
 PY
 rm -f "$RET/.upload_plan.json"

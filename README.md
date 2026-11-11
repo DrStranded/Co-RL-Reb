@@ -8,6 +8,8 @@
 
 做不到"一模一样"的地方，**停下来问发包给你的人（下称"联系人"）**，不要自己调参数凑结果。
 
+**用 Claude Code（或其他编程 agent）跑的话**：在仓库目录里打开它，说一句"按 CLAUDE.md 把这两个 run 跑完"即可。`CLAUDE.md` / `AGENTS.md` 是写给 agent 的完整规程（英文）；进度会由 `report_status.sh` 自动上报给联系人，不需要你转发日志。
+
 ---
 
 ## 这个文件夹里有什么
@@ -22,6 +24,8 @@
 | `expected_pip_check_collab.txt` | collab 环境 `pip check` 的预期输出（17 行，原环境里就有，不用修） |
 | `collect_results.sh`、`upload_results.sh` | 跑完后打包（含自动参数比对），再上传到联系人的 HuggingFace（私有仓）和 wandb |
 | `prefetch_hf.sh` | 只在计算节点不能上网时用：提前把模型和数据下到缓存 |
+| `report_status.sh` | 把当前状态（机器、下载、建环境、作业、各 run 进度和验证分、上传）写成 STATUS.md，并上传到联系人的私有 HF 仓；每个阶段跑一次 |
+| `CLAUDE.md`、`AGENTS.md` | 写给编程 agent 的完整操作规程 |
 | `SHA256SUMS` | 本文件夹所有文件的校验和 |
 
 两套环境：
