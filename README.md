@@ -42,10 +42,10 @@
   - HF token 存到 `~/.cache/huggingface/token`，`chmod 600`；
   - wandb key 在上传前 `export WANDB_API_KEY=...`。
 
-## 1. 解开并补全
+## 1. 拿到并补全
 ```
-tar -xzf arm64_repro.tar.gz -C /大容量目录/    # 得到 /大容量目录/arm64_repro/，路径里不能有空格或冒号
-cd /大容量目录/arm64_repro
+git clone https://github.com/DrStranded/Co-RL-Reb.git /大容量目录/arm64_repro   # 或者：tar -xzf arm64_repro.tar.gz -C /大容量目录/
+cd /大容量目录/arm64_repro                                                      # 路径里不能有空格或冒号
 sha256sum -c --quiet SHA256SUMS        # 没有任何输出 = 全部一致
 bash download_kit.sh collab            # 最后必须打印 ALL CODE AND 332 PACKAGE FILES PRESENT AND VERIFIED
 ```
@@ -76,7 +76,13 @@ srun -N1 --gres=gpu:1 -c 16 --mem=64G -t 02:00:00 bash setup_env_arm64.sh collab
 
 `envs/collab/pip_check.txt` 应该和 `expected_pip_check_collab.txt` 那 17 行一致，**不要去修**。
 
-## 3. 冒烟（强烈建议，没时间可以跳过）
+## 3. 冒烟（可以跳过）
+
+**联系人已经在 x86 集群上用同一条命令（训练命令逐字节相同）替你冒烟过 `ttrl_llama3b`**：
+- 参数比对正好是下面列出的 4 处不同，"只在新 run 里"的字段为 0；
+- 前两步 reward 0.380 / 0.388、长度 705.9 / 730.3，和原始 run 同一水平。
+
+所以建好环境（§2 打印 `ALL CHECKS PASS`）后，可以直接正式跑（§4）。想自己冒烟的话：
 ```
 SMOKE=1 EXP=ttrl_llama3b SEED=42 sbatch -N1 --gres=gpu:4 --exclusive --mem=0 --no-requeue -t 02:00:00 --export=ALL,KIT=$PWD run_exp_arm64.sh
 envs/collab/venv/bin/python compare_config.py runs/<新生成的 SMOKE_ttrl_llama3b_seed42_... 目录> json:ref_ttrl_llama3b_is9g1zwx.json
