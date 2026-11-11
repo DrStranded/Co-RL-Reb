@@ -30,7 +30,7 @@ smoke test is needed here**: build the environment, then submit the two runs.
 3. **Never resubmit a failed or interrupted run**, and never delete anything under `runs/`.
 4. **Never print, log, commit or upload the HF token or the wandb key.**
    - HF token goes to `~/.cache/huggingface/token` with `chmod 600`;
-   - export `WANDB_API_KEY` only in the shell that runs the upload.
+   - wandb key goes to an `api.wandb.ai` entry in `~/.netrc` (or `WANDB_API_KEY` in the upload shell).
 5. Do not `git commit` or `git push` anything in this repository.
 6. **Report at every milestone** with `bash report_status.sh`. It uploads STATUS.md to the project's private HF
    repo, and it is how the project contact follows progress. After each milestone also give the human a 2–3 line
@@ -58,11 +58,15 @@ bash download_kit.sh collab              # must end with: ALL CODE AND 332 PACKA
 ```
 Then run `bash report_status.sh`. This needs the HF token, so do step 2 first if the token is not there yet.
 
-**2. Credentials.** Ask the human for the HF token and wandb key that the project contact sent them. Then:
+**2. Credentials.** Usually the human already ran a one-line command from the project contact that writes both:
+- `~/.cache/huggingface/token`;
+- an `api.wandb.ai` entry in `~/.netrc`.
+
+**If both exist, credentials are done: do not ask.** Otherwise ask the human for the HF token and wandb key the
+project contact sent them, and write them the same way:
 ```bash
-mkdir -p ~/.cache/huggingface
-# write the token into ~/.cache/huggingface/token (no newline issues), then:
-chmod 600 ~/.cache/huggingface/token
+mkdir -p ~/.cache/huggingface && printf '%s' "$HF_TOKEN_VALUE" > ~/.cache/huggingface/token && chmod 600 ~/.cache/huggingface/token
+printf 'machine api.wandb.ai\n  login user\n  password %s\n' "$WANDB_KEY_VALUE" >> ~/.netrc && chmod 600 ~/.netrc
 ```
 
 **3. Build the environment** on an aarch64 GPU compute node (about 30 min; the last check runs on the GPU):
@@ -93,7 +97,6 @@ Then run `bash report_status.sh` and tell the human both job IDs.
 **6. When a run ends**, whether finished, timed out or crashed:
 ```bash
 bash collect_results.sh runs/<run dir>                   # builds runs/<run dir>_return/ (also compares the config with the original run)
-export WANDB_API_KEY=<key>
 DRY=1 bash upload_results.sh runs/<run dir>_return       # must end with: [dry run] all checks passed, nothing written
 bash upload_results.sh runs/<run dir>_return             # must end with: [hf] all repos uploaded and verified
 bash report_status.sh
@@ -133,6 +136,6 @@ Compare with the original run, which had the same configuration with 8 GPUs:
 
 ## When to ask the human (only these)
 1. Site scheduler flags (account / partition / QoS) and which large filesystem to use, if you cannot find them.
-2. The HF token and wandb key from the project contact.
+2. The HF token and wandb key from the project contact, only if they are not already in `~/.cache/huggingface/token` and `~/.netrc`.
 3. A stop condition above happened: < 4 GPUs per node, walltime < 60 h, no apptainer, setup failed, job failed.
    Report first with `bash report_status.sh`, then ask.
