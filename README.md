@@ -42,10 +42,10 @@
   - HF token 存到 `~/.cache/huggingface/token`，`chmod 600`；
   - wandb key 在上传前 `export WANDB_API_KEY=...`。
 
-## 1. 拿到这个仓库并补全
+## 1. 解开并补全
 ```
-git clone <本仓库地址> /大容量目录/arm64_kit      # 直接 clone 到大容量盘，路径里不能有空格或冒号
-cd /大容量目录/arm64_kit
+tar -xzf arm64_repro.tar.gz -C /大容量目录/    # 得到 /大容量目录/arm64_repro/，路径里不能有空格或冒号
+cd /大容量目录/arm64_repro
 sha256sum -c --quiet SHA256SUMS        # 没有任何输出 = 全部一致
 bash download_kit.sh collab            # 最后必须打印 ALL CODE AND 332 PACKAGE FILES PRESENT AND VERIFIED
 ```
