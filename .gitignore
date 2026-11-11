@@ -1,0 +1,11 @@
+# created by download_kit.sh / setup_env_arm64.sh / run_exp_arm64.sh -- never commit these
+code/
+wheelhouse_collab/
+wheelhouse_anvil/
+extra/
+envs/
+images/
+runs/
+cache/
+*.part
+*.log

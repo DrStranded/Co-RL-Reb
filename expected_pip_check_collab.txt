@@ -1,0 +1,20 @@
+# Expected 'pip check' output for the collab env (identical pins to the validated x86 env, where this exact output was obtained).
+# These conflicts already exist in the original environment (it was installed --no-deps from the paper run's freeze). Do NOT try to fix them.
+# The anvil env should print nothing (the only conflicts on x86 came from openrlhf, which this kit does not install).
+vllm 0.14.0 requires ray, which is not installed.
+hydra-core 1.3.2 has requirement antlr4-python3-runtime==4.9.*, but you have antlr4-python3-runtime 4.7.2.
+vllm 0.14.0 has requirement grpcio>=1.76.0, but you have grpcio 1.59.5.
+vllm 0.14.0 has requirement protobuf>=6.30.0, but you have protobuf 5.29.6.
+vllm 0.14.0 has requirement pydantic>=2.12.0, but you have pydantic 2.8.2.
+openai-harmony 0.0.8 has requirement pydantic>=2.11.7, but you have pydantic 2.8.2.
+mcp 1.26.0 has requirement pydantic<3.0.0,>=2.11.0, but you have pydantic 2.8.2.
+grpcio-reflection 1.78.0 has requirement grpcio>=1.78.0, but you have grpcio 1.59.5.
+grpcio-reflection 1.78.0 has requirement protobuf<7.0.0,>=6.31.1, but you have protobuf 5.29.6.
+sse-starlette 3.3.2 has requirement starlette>=0.49.1, but you have starlette 0.41.3.
+omegaconf 2.3.0 has requirement antlr4-python3-runtime==4.9.*, but you have antlr4-python3-runtime 4.7.2.
+typer 0.17.5 has requirement click<8.3.0,>=8.0.0, but you have click 8.4.1.
+opencv-python-headless 4.13.0.92 has requirement numpy>=2; python_version >= "3.9", but you have numpy 1.26.3.
+model-hosting-container-standards 0.1.13 has requirement starlette>=0.49.1, but you have starlette 0.41.3.
+cupy-cuda12x 14.0.1 has requirement numpy<2.6,>=2.0, but you have numpy 1.26.3.
+trl 1.2.0.dev0 has requirement datasets>=4.7.0, but you have datasets 4.6.1.
+scipy 1.17.1 has requirement numpy<2.7,>=1.26.4, but you have numpy 1.26.3.
