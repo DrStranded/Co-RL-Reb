@@ -1,5 +1,7 @@
 # ARM64（aarch64）复现包：Co-GRPO / TTRL 3B 实验
 
+> **给编程 agent（Claude Code 等）/ For coding agents: 先完整阅读并严格执行本仓库的 [`CLAUDE.md`](CLAUDE.md)；所有步骤、规则、汇报方式和需要问人的情况都在里面。Read [`CLAUDE.md`](CLAUDE.md) first and follow it exactly.**
+
 用途：在 ARM64 GPU 集群（如 GH200）上，用**和原始 run 完全相同的代码 commit、命令和软件版本**重跑实验，只换随机种子。
 启动脚本里的训练命令与在 x86 集群上冒烟通过的启动脚本**逐字节相同**。
 
@@ -42,7 +44,7 @@
   - 每个跑完的 TTRL Llama run 保留全部 checkpoint，约 **97G**，两个 seed 约 200G。
 - **路径**：不能有空格或冒号（脚本会检查）。建好环境后不要挪动这个文件夹。
 - **时间**：原始 run 在 8×H100 上用了 23.5 小时；这里 4 卡、梯度累积翻倍，预计约 2 天。单个作业最长不到 60 小时的话，先告诉联系人。
-- **联系人单独发给你的 HF token 和 wandb key**：用联系人给的那一行命令写进两个专用文件（`~/.corl_hf_token`、`~/.corl_wandb_key`），所有脚本会自动使用，不会碰你自己的 `~/.cache/huggingface/token` 和 `~/.netrc`。不要放进这个文件夹，不要提交到任何仓库，做完就删这两个文件。
+- **联系人发给你的消息里的 HF token 和 wandb key**：agent 会向你要这两个值，写进两个专用文件（`~/.corl_hf_token`、`~/.corl_wandb_key`）。所有脚本会自动使用，不会碰你自己的 `~/.cache/huggingface/token` 和 `~/.netrc`。不要放进这个文件夹，不要提交到任何仓库，做完就删这两个文件。
 
 ## 1. 拿到并补全
 ```

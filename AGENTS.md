@@ -40,6 +40,13 @@ smoke test is needed here**: build the environment, then submit the two runs.
 ## Steps
 Run everything from the kit directory, i.e. the root of this repository clone (`cd` into it first).
 
+**Location first.** This repository clone must sit on a filesystem with **≥ 250 GB free**, at a path with **no spaces
+and no `:`**. The downloads, environment and checkpoints are all written inside it.
+- If it was cloned somewhere else (e.g. a small home directory with a quota), clone it again into a suitable place:
+  `git clone https://github.com/DrStranded/Co-RL-Reb.git <big fs>/Co-RL-Reb`. Work only there.
+- If you cannot tell which filesystem is large and allowed, ask the human (the cluster usually has a "scratch" or
+  "work" area).
+
 **0. Preflight.** If any of the following fails, report and ask the human (see below):
 - a compute node is aarch64 (`srun ... uname -m`) and has ≥ 4 GPUs (`nvidia-smi -L`);
 - `apptainer --version` ≥ 1.1 (try `module load apptainer` if it is missing);
@@ -59,14 +66,16 @@ bash download_kit.sh collab              # must end with: ALL CODE AND 332 PACKA
 ```
 Then run `bash report_status.sh`. This needs the HF token, so do step 2 first if the token is not there yet.
 
-**2. Credentials.** The human normally already ran the one-line command from the project contact:
-```bash
-umask 077; printf '%s' '<HF token>' > ~/.corl_hf_token; printf '%s' '<wandb key>' > ~/.corl_wandb_key
-```
-- **If both files exist and are non-empty, credentials are done: do not ask.**
-- Otherwise ask the human for the two values the project contact sent them and write the files exactly like that.
-- Never echo the values.
-- All scripts (run, upload, status, prefetch) use these files automatically, so no `export` is needed.
+**2. Credentials.** The project contact's message to the human contains two secrets: their HuggingFace token
+(starts with `hf_`) and their wandb API key. If `~/.corl_hf_token` and `~/.corl_wandb_key` already exist and are
+non-empty, this step is done. Otherwise:
+- ask the human to paste those two values from that message;
+- write them like this, without printing them:
+  ```bash
+  umask 077; printf '%s' '<HF token>' > ~/.corl_hf_token; printf '%s' '<wandb key>' > ~/.corl_wandb_key
+  ```
+- all scripts (run, upload, status, prefetch) use these files automatically;
+- do not touch the human's own `~/.cache/huggingface/token` or `~/.netrc`.
 
 **3. Build the environment** on an aarch64 GPU compute node (about 30 min; the last check runs on the GPU):
 ```bash
