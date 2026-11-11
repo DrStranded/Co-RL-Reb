@@ -42,9 +42,7 @@
   - 每个跑完的 TTRL Llama run 保留全部 checkpoint，约 **97G**，两个 seed 约 200G。
 - **路径**：不能有空格或冒号（脚本会检查）。建好环境后不要挪动这个文件夹。
 - **时间**：原始 run 在 8×H100 上用了 23.5 小时；这里 4 卡、梯度累积翻倍，预计约 2 天。单个作业最长不到 60 小时的话，先告诉联系人。
-- **联系人单独发给你的 HF token 和 wandb key**：不要放进这个文件夹，不要提交到任何仓库，做完就删。
-  - HF token 存到 `~/.cache/huggingface/token`，`chmod 600`；
-  - wandb key 在上传前 `export WANDB_API_KEY=...`。
+- **联系人单独发给你的 HF token 和 wandb key**：用联系人给的那一行命令写进两个专用文件（`~/.corl_hf_token`、`~/.corl_wandb_key`），所有脚本会自动使用，不会碰你自己的 `~/.cache/huggingface/token` 和 `~/.netrc`。不要放进这个文件夹，不要提交到任何仓库，做完就删这两个文件。
 
 ## 1. 拿到并补全
 ```
@@ -126,7 +124,6 @@ checkpoint 只存了模型（没有优化器状态），续训要用专门的步
 ## 6. 跑完后：打包、上传
 ```
 bash collect_results.sh runs/<run>
-export WANDB_API_KEY=<联系人给你的 key>
 DRY=1 bash upload_results.sh runs/<run>_return        # 演练：检查所有凭证，打印计划，什么都不写
 bash upload_results.sh runs/<run>_return              # 真上传（在能上网的节点上跑）
 ```

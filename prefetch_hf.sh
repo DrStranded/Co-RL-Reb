@@ -9,7 +9,7 @@
 set -euo pipefail
 ENVNAME="${1:?usage: prefetch_hf.sh collab|anvil}"
 KIT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-HF_HOME_DIR="$(realpath -m "${HF_HOME_DIR:-$KIT/cache/hf}")"; HF_TOKEN_FILE="${HF_TOKEN_FILE:-$HOME/.cache/huggingface/token}"
+HF_HOME_DIR="$(realpath -m "${HF_HOME_DIR:-$KIT/cache/hf}")"; HF_TOKEN_FILE="${HF_TOKEN_FILE:-$( [ -s "$HOME/.corl_hf_token" ] && echo "$HOME/.corl_hf_token" || echo "$HOME/.cache/huggingface/token" )}"
 case "$ENVNAME" in collab) CUDAV=12.9.1 ;; anvil) CUDAV=12.8.1 ;; *) echo "unknown env $ENVNAME"; exit 2 ;; esac
 ENV="$KIT/envs/$ENVNAME/venv"; SIF="$KIT/images/cuda-$CUDAV-cudnn-devel-arm64.sif"
 [ -f "$KIT/envs/$ENVNAME/ENV_READY" ] && [ -f "$SIF" ] || { echo "FATAL: run setup_env_arm64.sh $ENVNAME first"; exit 1; }

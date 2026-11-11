@@ -26,7 +26,7 @@ KIT="${KIT:-$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)}"
 [ -f "$KIT/setup_env_arm64.sh" ] || KIT="${SLURM_SUBMIT_DIR:-$KIT}"   # under sbatch BASH_SOURCE is a spooled copy
 [ -f "$KIT/setup_env_arm64.sh" ] || { echo "FATAL: cannot find the kit (got KIT=$KIT); pass KIT=/path/to/arm64_kit"; exit 1; }
 KIT="$(realpath -m "$KIT")"; R="$KIT"
-OUT_ROOT="${OUT_ROOT:-$KIT/runs}"; HF_HOME_DIR="${HF_HOME_DIR:-$KIT/cache/hf}"; HF_TOKEN_FILE="${HF_TOKEN_FILE:-$HOME/.cache/huggingface/token}"
+OUT_ROOT="${OUT_ROOT:-$KIT/runs}"; HF_HOME_DIR="${HF_HOME_DIR:-$KIT/cache/hf}"; HF_TOKEN_FILE="${HF_TOKEN_FILE:-$( [ -s "$HOME/.corl_hf_token" ] && echo "$HOME/.corl_hf_token" || echo "$HOME/.cache/huggingface/token" )}"
 OUT_ROOT="$(realpath -m "$OUT_ROOT")"; HF_HOME_DIR="$(realpath -m "$HF_HOME_DIR")"   # the container cds into the code dir
 [ "$(uname -m)" = aarch64 ] || { echo "FATAL: not an aarch64 node"; exit 1; }
 [ -s "$HF_TOKEN_FILE" ] || { echo "FATAL: HF token file $HF_TOKEN_FILE missing (needed for Llama + private dataset)"; exit 1; }

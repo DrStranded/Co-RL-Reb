@@ -6,7 +6,7 @@
 #   DRY=1 bash report_status.sh     # only write and print STATUS.md
 set -uo pipefail
 KIT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"; cd "$KIT"
-OUT="$KIT/STATUS.md"; HF_TOKEN_FILE="${HF_TOKEN_FILE:-$HOME/.cache/huggingface/token}"
+OUT="$KIT/STATUS.md"; HF_TOKEN_FILE="${HF_TOKEN_FILE:-$( [ -s "$HOME/.corl_hf_token" ] && echo "$HOME/.corl_hf_token" || echo "$HOME/.cache/huggingface/token" )}"
 NS="${UPLOAD_NAMESPACE:-logan7000}"; REPO="${STATUS_REPO:-$NS/repro-arm-status}"; SITE="${UPLOAD_SITE:-arm}"
 TS=$(date -u +%Y%m%dT%H%M%SZ); HOST=$(hostname -s)
 {

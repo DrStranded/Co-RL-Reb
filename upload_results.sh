@@ -23,7 +23,8 @@ KIT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 RET="$(cd "${1:?usage: upload_results.sh runs/<RUN>_return}" && pwd)"
 RUNNAME="$(basename "$RET")"
 DRY="${DRY:-0}"; SITE="${UPLOAD_SITE:-arm}"; NS="${UPLOAD_NAMESPACE:-logan7000}"; RESUME="${UPLOAD_RESUME:-0}"
-export HF_TOKEN_FILE="${HF_TOKEN_FILE:-$HOME/.cache/huggingface/token}"
+export HF_TOKEN_FILE="${HF_TOKEN_FILE:-$( [ -s "$HOME/.corl_hf_token" ] && echo "$HOME/.corl_hf_token" || echo "$HOME/.cache/huggingface/token" )}"
+[ -z "${WANDB_API_KEY:-}" ] && [ -s "$HOME/.corl_wandb_key" ] && export WANDB_API_KEY="$(cat "$HOME/.corl_wandb_key")"   # dedicated key file
 WANDB_ENTITY=logan-yang2002-johns-hopkins-university; WANDB_PROJECT=Co-learning
 
 # 0) what is this run? (before anything else)

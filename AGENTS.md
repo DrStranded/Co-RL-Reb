@@ -29,8 +29,9 @@ smoke test is needed here**: build the environment, then submit the two runs.
    - walltime ≥ 60 hours.
 3. **Never resubmit a failed or interrupted run**, and never delete anything under `runs/`.
 4. **Never print, log, commit or upload the HF token or the wandb key.**
-   - HF token goes to `~/.cache/huggingface/token` with `chmod 600`;
-   - wandb key goes to an `api.wandb.ai` entry in `~/.netrc` (or `WANDB_API_KEY` in the upload shell).
+   - They live in two dedicated files, `~/.corl_hf_token` and `~/.corl_wandb_key`, which every script picks up
+     automatically.
+   - **Do not touch `~/.cache/huggingface/token` or `~/.netrc`**: they may hold the human's own credentials.
 5. Do not `git commit` or `git push` anything in this repository.
 6. **Report at every milestone** with `bash report_status.sh`. It uploads STATUS.md to the project's private HF
    repo, and it is how the project contact follows progress. After each milestone also give the human a 2–3 line
@@ -58,16 +59,14 @@ bash download_kit.sh collab              # must end with: ALL CODE AND 332 PACKA
 ```
 Then run `bash report_status.sh`. This needs the HF token, so do step 2 first if the token is not there yet.
 
-**2. Credentials.** Usually the human already ran a one-line command from the project contact that writes both:
-- `~/.cache/huggingface/token`;
-- an `api.wandb.ai` entry in `~/.netrc`.
-
-**If both exist, credentials are done: do not ask.** Otherwise ask the human for the HF token and wandb key the
-project contact sent them, and write them the same way:
+**2. Credentials.** The human normally already ran the one-line command from the project contact:
 ```bash
-mkdir -p ~/.cache/huggingface && printf '%s' "$HF_TOKEN_VALUE" > ~/.cache/huggingface/token && chmod 600 ~/.cache/huggingface/token
-printf 'machine api.wandb.ai\n  login user\n  password %s\n' "$WANDB_KEY_VALUE" >> ~/.netrc && chmod 600 ~/.netrc
+umask 077; printf '%s' '<HF token>' > ~/.corl_hf_token; printf '%s' '<wandb key>' > ~/.corl_wandb_key
 ```
+- **If both files exist and are non-empty, credentials are done: do not ask.**
+- Otherwise ask the human for the two values the project contact sent them and write the files exactly like that.
+- Never echo the values.
+- All scripts (run, upload, status, prefetch) use these files automatically, so no `export` is needed.
 
 **3. Build the environment** on an aarch64 GPU compute node (about 30 min; the last check runs on the GPU):
 ```bash
@@ -136,6 +135,6 @@ Compare with the original run, which had the same configuration with 8 GPUs:
 
 ## When to ask the human (only these)
 1. Site scheduler flags (account / partition / QoS) and which large filesystem to use, if you cannot find them.
-2. The HF token and wandb key from the project contact, only if they are not already in `~/.cache/huggingface/token` and `~/.netrc`.
+2. The HF token and wandb key from the project contact, only if `~/.corl_hf_token` / `~/.corl_wandb_key` are missing.
 3. A stop condition above happened: < 4 GPUs per node, walltime < 60 h, no apptainer, setup failed, job failed.
    Report first with `bash report_status.sh`, then ask.
