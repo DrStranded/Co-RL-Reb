@@ -24,9 +24,10 @@
 | `run_exp_arm64.sh` | 启动脚本，训练命令与 x86 版逐字节相同 |
 | `compare_config.py`、`ref_*.json` | 把实际生效的训练参数和原始 run 逐字段比对；`ref_*.json` 是三个原始 run 的参数记录（已去掉路径等无关字段） |
 | `expected_pip_check_collab.txt` | collab 环境 `pip check` 的预期输出（17 行，原环境里就有，不用修） |
-| `collect_results.sh`、`upload_results.sh` | 跑完后打包（含自动参数比对），再上传到联系人的 HuggingFace（私有仓）和 wandb |
+| `collect_results.sh`、`upload_results.sh` | 跑完后打包（含自动参数比对），再上传到联系人的 HuggingFace（公开仓，日志先脱敏）和 wandb |
 | `prefetch_hf.sh` | 只在计算节点不能上网时用：提前把模型和数据下到缓存 |
-| `report_status.sh` | 把当前状态（机器、下载、建环境、作业、各 run 进度和验证分、上传）写成 STATUS.md，并上传到联系人的私有 HF 仓；每个阶段跑一次 |
+| `report_status.sh` | 把当前状态（机器、下载、建环境、作业、各 run 进度和验证分、上传）写成 STATUS.md，脱敏后上传到联系人的公开 HF 状态仓；每个阶段跑一次 |
+| `scrub_logs.py` | 日志脱敏：把路径、主机名、用户名、邮箱、IP 换成占位符；替换后仍有残留的文件不上传 |
 | `CLAUDE.md`、`AGENTS.md` | 写给编程 agent 的完整操作规程 |
 | `SHA256SUMS` | 本文件夹所有文件的校验和 |
 
@@ -126,7 +127,7 @@ checkpoint 只存了模型（没有优化器状态），续训要用专门的步
 ## 6. 跑完后：打包、上传
 ```
 bash collect_results.sh runs/<run>
-DRY=1 bash upload_results.sh runs/<run>_return        # 演练：检查所有凭证，打印计划，什么都不写
+DRY=1 bash upload_results.sh runs/<run>_return        # 演练：检查所有凭证，生成公开副本 runs/<run>_return/.public，打印计划，不上传
 bash upload_results.sh runs/<run>_return              # 真上传（在能上网的节点上跑）
 ```
 - **打包**：生成 `runs/<run>_return/`，约 12G（checkpoint 用硬链接，不额外占空间）。打包失败不会留下半成品。内容：
@@ -141,9 +142,12 @@ bash upload_results.sh runs/<run>_return              # 真上传（在能上网
   - HF token 必须有写权限；
   - 冒烟 run 一律拒绝；
   - 已存在的仓不覆盖。
-- **上传顺序**：先把 wandb 离线日志 sync 上去，再在 HF 建**私有**仓（名字形如 `repro-ttrl-llama32-3b-instruct-seed43-arm-full`）传 `best/`、`endpoint/` 和日志，最后逐个文件核对大小。
+- **上传内容**：HF 上建**公开**仓（名字形如 `logan7000/llm-math345-ttrl-llama32-3b-seed43-full`）：
+  - `best/`、`endpoint/`：只放权重、config、tokenizer、`trainer_state.json`，不放 `training_args.bin`（它的 JSON 版在 `logs/`）；这些文件只检查不改动，权重、config、tokenizer 若含路径、主机名或用户名，整个上传中止；`trainer_state.json` 若含，则只放 `logs/` 里的脱敏版；
+  - `logs/`：train.log、启动和环境日志、参数比对、训练参数（JSON）、wandb 文本日志，全部经 `scrub_logs.py` 脱敏；脱敏后仍有残留的文件不传，并在输出里列出；wandb 的二进制 `.wandb` 文件不传（已 sync 到 wandb）。
+- **上传顺序**：先把 wandb 离线日志 sync 上去，再传 HF（先传 README，再传其余文件），最后逐个文件核对大小。
 - **上传断了**：用 `UPLOAD_RESUME=1 bash upload_results.sh runs/<run>_return` 接着传。
-- **用哪个 Python**：ARM 节点上自动用建好的环境（在容器里跑）；在 x86 节点上传先 `pip install --user huggingface_hub wandb`（Python ≥ 3.9）。
+- **用哪个 Python**：生成公开副本这一步用主机自带的 python3（≥ 3.6，只用标准库）；HF 和 wandb 这两步在 ARM 节点上自动用建好的环境（在容器里跑），在 x86 节点上传先 `pip install --user huggingface_hub wandb`（Python ≥ 3.9）。
 - 上传完把脚本打印的仓名发给联系人，原始 run 目录先别删。
 
 ## 7. 计算节点不能上网时

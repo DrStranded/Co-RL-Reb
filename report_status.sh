@@ -1,16 +1,17 @@
 #!/usr/bin/env bash
 # Write the current state of this kit (machine, download, setup, jobs, runs, uploads) into STATUS.md and upload it to
-# the project's private HuggingFace repo, so the project contact can follow progress without anyone forwarding logs.
-# Contains no secrets (aborts if the HF token string would end up in the file).
-#   bash report_status.sh           # write STATUS.md and upload it   (needs the HF token file and internet)
-#   DRY=1 bash report_status.sh     # only write and print STATUS.md
+# the project's PUBLIC HuggingFace status repo, so the project contact can follow progress without anyone forwarding logs.
+# What is uploaded is STATUS.public.md: STATUS.md passed through scrub_logs.py (paths, host names, user names, e-mails,
+# IPs replaced). If anything identifying or secret is still found, nothing is uploaded.
+#   bash report_status.sh           # write STATUS.md + STATUS.public.md and upload the latter (needs the HF token file and internet)
+#   DRY=1 bash report_status.sh     # only write them and print STATUS.public.md
 set -uo pipefail
 KIT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"; cd "$KIT"
 OUT="$KIT/STATUS.md"; HF_TOKEN_FILE="${HF_TOKEN_FILE:-$( [ -s "$HOME/.corl_hf_token" ] && echo "$HOME/.corl_hf_token" || echo "$HOME/.cache/huggingface/token" )}"
-NS="${UPLOAD_NAMESPACE:-logan7000}"; REPO="${STATUS_REPO:-$NS/repro-arm-status}"; SITE="${UPLOAD_SITE:-arm}"
-TS=$(date -u +%Y%m%dT%H%M%SZ); HOST=$(hostname -s)
+NS="${UPLOAD_NAMESPACE:-logan7000}"; REPO="${STATUS_REPO:-$NS/llm-math345-ttrl-llama32-3b-run-status}"
+TS=$(date -u +%Y%m%dT%H%M%SZ); PUBOUT="$KIT/STATUS.public.md"
 {
-echo "# status $TS  (site $SITE, host $HOST, $(uname -m))"
+echo "# status $TS  ($(uname -m))"
 echo; echo "## machine (where this was run)"
 echo "- GPUs: $(nvidia-smi -L 2>/dev/null | wc -l)  $(nvidia-smi --query-gpu=name,driver_version --format=csv,noheader 2>/dev/null | head -1)"
 echo "- apptainer: $(apptainer --version 2>/dev/null || echo 'not found on this node')"
@@ -37,7 +38,7 @@ for env in collab anvil; do
   fi
 done
 echo; echo "## jobs"; echo '```'
-squeue -u "$USER" -o "%i %j %T %M %l %R" 2>/dev/null || echo "squeue not available here"
+squeue -u "$USER" -o "%i %j %T %M %l %r" 2>/dev/null || echo "squeue not available here"
 echo '```'
 echo; echo "## runs"
 for d in runs/*/; do
@@ -59,11 +60,17 @@ for d in runs/*/; do
 done
 } > "$OUT" 2>&1
 if [ -s "$HF_TOKEN_FILE" ] && grep -qF "$(cat "$HF_TOKEN_FILE")" "$OUT"; then echo "FATAL: STATUS.md would contain the HF token; not uploading"; exit 1; fi
-if [ "${DRY:-0}" = 1 ]; then cat "$OUT"; echo; echo "[dry run] STATUS.md written, not uploaded"; exit 0; fi
+# public copy: same content with paths / host names / user names / e-mails / IPs replaced; all-or-nothing
+SCRUB_DIR=$(mktemp -d "$KIT/.status_scrub.XXXXXX"); rm -f "$PUBOUT"
+python3 -I "$KIT/scrub_logs.py" --dest "$SCRUB_DIR" --extra logan-yang2002-johns-hopkins-university \
+  --secret-file "$HF_TOKEN_FILE" --secret-file "$HOME/.corl_wandb_key" "$OUT=STATUS.public.md"; rc=$?
+[ "$rc" = 0 ] && [ -s "$SCRUB_DIR/STATUS.public.md" ] && mv "$SCRUB_DIR/STATUS.public.md" "$PUBOUT"; rm -rf "$SCRUB_DIR"
+[ -s "$PUBOUT" ] || { echo "FATAL: the public copy of STATUS.md still names a path/host/user or a secret (scrub_logs.py rc=$rc); nothing uploaded. Send STATUS.md to the project contact another way."; exit 1; }
+if [ "${DRY:-0}" = 1 ]; then cat "$PUBOUT"; echo; echo "[dry run] STATUS.md and STATUS.public.md written, not uploaded"; exit 0; fi
 [ -s "$HF_TOKEN_FILE" ] || { echo "FATAL: HF token file $HF_TOKEN_FILE missing; STATUS.md written but not uploaded"; exit 1; }
 
 SIF="$KIT/images/cuda-12.9.1-cudnn-devel-arm64.sif"; KPY="$KIT/envs/collab/venv/bin/python"
-export U_REPO="$REPO" U_OUT="$OUT" U_NAME="status/${SITE}_${HOST}_${TS}.md" U_LATEST="STATUS_latest_${SITE}.md" HF_TOKEN_FILE
+export U_REPO="$REPO" U_OUT="$PUBOUT" U_NAME="status/${TS}.md" U_LATEST="STATUS_latest.md" HF_TOKEN_FILE
 if [ "$(uname -m)" = aarch64 ] && [ -x "$KPY" ] && [ -f "$SIF" ]; then
   for v in U_REPO U_OUT U_NAME U_LATEST; do export "APPTAINERENV_$v=${!v}"; done
   run_py() { apptainer exec --cleanenv -B "$KIT" -B "$(dirname "$HF_TOKEN_FILE")" --env HF_TOKEN_FILE="$HF_TOKEN_FILE" "$SIF" "$KPY" "$@"; }
@@ -73,7 +80,8 @@ import os
 from huggingface_hub import HfApi
 E = os.environ
 api = HfApi(token=open(E["HF_TOKEN_FILE"]).read().strip())
-api.create_repo(E["U_REPO"], repo_type="model", private=True, exist_ok=True)
+api.create_repo(E["U_REPO"], repo_type="model", private=False, exist_ok=True)
+if api.model_info(E["U_REPO"]).private: raise SystemExit(f"FATAL: {E['U_REPO']} is private; expected public (private storage is full)")
 for path in (E["U_NAME"], E["U_LATEST"]):
     api.upload_file(path_or_fileobj=E["U_OUT"], path_in_repo=path, repo_id=E["U_REPO"], repo_type="model", commit_message="status")
 print(f"[status] uploaded to {E['U_REPO']}: {E['U_NAME']} (and {E['U_LATEST']})")

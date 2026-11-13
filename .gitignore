@@ -9,3 +9,7 @@ runs/
 cache/
 *.part
 *.log
+STATUS.md
+STATUS.public.md
+.status_scrub.*
+__pycache__/

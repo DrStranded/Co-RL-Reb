@@ -33,8 +33,8 @@ smoke test is needed here**: build the environment, then submit the two runs.
      automatically.
    - **Do not touch `~/.cache/huggingface/token` or `~/.netrc`**: they may hold the human's own credentials.
 5. Do not `git commit` or `git push` anything in this repository.
-6. **Report at every milestone** with `bash report_status.sh`. It uploads STATUS.md to the project's private HF
-   repo, and it is how the project contact follows progress. After each milestone also give the human a 2–3 line
+6. **Report at every milestone** with `bash report_status.sh`. It uploads a scrubbed copy of STATUS.md (paths, host
+   and user names replaced) to the project's public HF status repo, and it is how the project contact follows progress. After each milestone also give the human a 2–3 line
    summary.
 
 ## Steps
@@ -105,10 +105,13 @@ Then run `bash report_status.sh` and tell the human both job IDs.
 **6. When a run ends**, whether finished, timed out or crashed:
 ```bash
 bash collect_results.sh runs/<run dir>                   # builds runs/<run dir>_return/ (also compares the config with the original run)
-DRY=1 bash upload_results.sh runs/<run dir>_return       # must end with: [dry run] all checks passed, nothing written
+DRY=1 bash upload_results.sh runs/<run dir>_return       # last line must start with: [dry run] all checks passed
 bash upload_results.sh runs/<run dir>_return             # must end with: [hf] all repos uploaded and verified
 bash report_status.sh
 ```
+- The upload goes to a **public** repo (`logan7000/llm-math345-ttrl-llama32-3b-seed4X-full`). Logs are scrubbed by
+  `scrub_logs.py` first; the dry run builds the public copy in `runs/<run dir>_return/.public` and lists any log it left
+  out (`[scrub] WITHHELD ...`). Report those lines; do not edit logs or scripts to get them through.
 - If the upload is interrupted, rerun the last line with `UPLOAD_RESUME=1`.
 - Keep `runs/` until the project contact confirms.
 
